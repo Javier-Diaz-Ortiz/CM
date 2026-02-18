@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../services/firebase';
 import { useRouter } from 'expo-router';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useState } from 'react';
+import { Alert, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { auth } from '../services/firebase';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -14,13 +14,13 @@ export default function Login() {
             await signInWithEmailAndPassword(auth, email, password);
             router.replace('/home');
         } catch (error) {
-            Alert.alert('Login Error', error.message);
+            Alert.alert('Error de acceso', error.message);
         }
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Login</Text>
+            <Text style={styles.title}>Iniciar Sesión</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Email"
@@ -31,34 +31,24 @@ export default function Login() {
             />
             <TextInput
                 style={styles.input}
-                placeholder="Password"
+                placeholder="Contraseña"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
             />
-            <Button title="Login" onPress={handleLogin} />
-            <Button title="Back to Home" onPress={() => router.push('/home')} color="gray" />
+            <Button title="Entrar" onPress={handleLogin} />
+            
+            <TouchableOpacity onPress={() => router.push('/register')} style={styles.linkContainer}>
+                <Text>¿No tienes cuenta? <Text style={styles.linkText}>Regístrate aquí</Text></Text>
+            </TouchableOpacity>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        padding: 20,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        padding: 10,
-        marginBottom: 10,
-        borderRadius: 5,
-    },
+    container: { flex: 1, justifyContent: 'center', padding: 20 },
+    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+    input: { borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 10, borderRadius: 5 },
+    linkContainer: { marginTop: 15, alignItems: 'center' },
+    linkText: { color: '#007AFF', fontWeight: 'bold' }
 });
