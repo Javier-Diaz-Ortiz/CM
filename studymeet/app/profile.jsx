@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+// Sin Firebase Storage: Guardaremos la foto comprimida directamente en Firestore
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Button, StyleSheet, Text, View, Image, TouchableOpacity, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -50,33 +50,31 @@ export default function Profile() {
             mediaTypes: ['images'],
             allowsEditing: true,
             aspect: [1, 1],
-            quality: 0.5,
+            quality: 0.2, // Muy comprimida para que quepa como texto en la base de datos
+            base64: true,
         });
 
         if (!result.canceled) {
-            uploadImage(result.assets[0].uri);
+            uploadImage(result.assets[0]);
         }
     };
 
-    const uploadImage = async (uri) => {
+    const uploadImage = async (asset) => {
         const user = auth.currentUser;
         if (!user) return;
 
         setUploading(true);
         try {
-            const response = await fetch(uri);
-            const blob = await response.blob();
-            
-            const storageRef = ref(storage, `profile_pictures/${user.uid}`);
-            await uploadBytes(storageRef, blob);
-            
-            const downloadURL = await getDownloadURL(storageRef);
-            
-            // Actualizar Firestore
+            const imageBase64 = `data:image/jpeg;base64,${asset.base64}`;
+
+            // Hack genial: guardamos la imagen reducida y empaquetada como texto
+            // directamente en el usuario. Así no necesitas pagar suscripción web.
             const docRef = doc(db, 'users', user.uid);
             await updateDoc(docRef, {
-                photoURL: downloadURL
+                photoURL: imageBase64
             });
+
+            const downloadURL = imageBase64;
 
             // Actualizar estado local
             setUserData(prev => ({ ...prev, photoURL: downloadURL }));
@@ -100,7 +98,7 @@ export default function Profile() {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Mi Perfil</Text>
-            
+
             <View style={styles.profileHeader}>
                 <TouchableOpacity onPress={pickImage} disabled={uploading}>
                     <View style={styles.imageContainer}>
@@ -127,7 +125,7 @@ export default function Profile() {
             <View style={styles.card}>
                 <Text style={styles.label}>Email:</Text>
                 <Text style={styles.value}>{userData?.email || auth.currentUser?.email}</Text>
-                
+
                 <Text style={styles.label}>Miembro desde:</Text>
                 <Text style={styles.value}>
                     {userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'N/A'}
