@@ -64,13 +64,13 @@ export default function Home() {
 
 
    const handleLogout = async () => {
-    try { 
-        await signOut(auth); 
-    } catch (e) { 
-        console.error(e);
-        Alert.alert("Error", "No hemos podido cerrar tu sesión. Comprueba tu conexión a internet."); 
-    }
-    
+        try { 
+            await signOut(auth); 
+        } catch (e) { 
+            console.error(e);
+            Alert.alert("Error", "No hemos podido cerrar tu sesión. Comprueba tu conexión a internet."); 
+        }
+    };
 
     const handleJoin = async (sessionId, currentParticipants = []) => {
         try {
@@ -95,7 +95,7 @@ export default function Home() {
             Alert.alert("Uy, algo falló", "No hemos podido procesar tu solicitud para unirte o salir de la sesión.");
         }
     };
-    };
+    
 
     if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#007AFF" /></View>;
 

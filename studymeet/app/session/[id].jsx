@@ -97,10 +97,13 @@ export default function SessionDetail() {
     const handleSend = async () => {
         if (!textMsg.trim()) return;
         try {
-            const name = user.email.split('@')[0];
+            const name = user.displayName || user?.email?.split('@')[0] || "Alumno";
             await sendMessage(id, user.uid, name, textMsg);
             setTextMsg("");
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error(e);
+            Alert.alert("Mensaje no enviado", "Parece que no tienes conexión. Inténtalo de nuevo.");
+        }
     };
 
     return (
