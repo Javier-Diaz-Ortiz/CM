@@ -2,7 +2,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { arrayRemove, arrayUnion, doc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Button, FlatList, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
 import * as Location from 'expo-location';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import { auth, db } from "../services/firebase";
@@ -63,9 +63,14 @@ export default function Home() {
     }, []);
 
 
-    const handleLogout = async () => {
-        try { await signOut(auth); } catch (e) { console.error(e); }
-    };
+   const handleLogout = async () => {
+    try { 
+        await signOut(auth); 
+    } catch (e) { 
+        console.error(e);
+        Alert.alert("Error", "No hemos podido cerrar tu sesión. Comprueba tu conexión a internet."); 
+    }
+    
 
     const handleJoin = async (sessionId, currentParticipants = []) => {
         try {
@@ -84,9 +89,12 @@ export default function Home() {
                 });
             }
             // fetchSessions() ya no es necesario, onSnapshot lo actualizará
+        // ... código anterior ...
         } catch (error) {
             console.error("Error al gestionar unión:", error);
+            Alert.alert("Uy, algo falló", "No hemos podido procesar tu solicitud para unirte o salir de la sesión.");
         }
+    };
     };
 
     if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#007AFF" /></View>;
