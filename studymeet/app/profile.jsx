@@ -2,15 +2,20 @@ import { useRouter } from 'expo-router';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 // Sin Firebase Storage: Guardaremos la foto comprimida directamente en Firestore
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Button, StyleSheet, Text, View, Image, TouchableOpacity, Alert } from 'react-native';
+import { ActivityIndicator, Button, StyleSheet, Text, View, Image, TouchableOpacity, Alert, TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { auth, db, storage } from '../services/firebase';
+import { auth, db } from '../services/firebase';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Profile() {
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    
+    // --- VARIABLES NUEVAS PARA EL NOMBRE ---
+    const [name, setName] = useState('');
+    const [savingName, setSavingName] = useState(false);
+    
     const router = useRouter();
 
     useEffect(() => {
@@ -18,12 +23,16 @@ export default function Profile() {
             try {
                 const user = auth.currentUser;
                 if (user) {
-                    // Buscamos el documento en la colección 'users' que coincida con el UID
                     const docRef = doc(db, 'users', user.uid);
                     const docSnap = await getDoc(docRef);
 
                     if (docSnap.exists()) {
-                        setUserData(docSnap.data());
+                        const data = docSnap.data();
+                        setUserData(data);
+                        // NUEVO: Si el usuario ya tiene nombre en la base de datos, lo mostramos
+                        if (data.name) {
+                            setName(data.name);
+                        }
                     } else {
                         console.log("No se encontró el documento en Firestore");
                     }
@@ -39,18 +48,18 @@ export default function Profile() {
     }, []);
 
     const pickImage = async () => {
-        // Pedir permisos
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
             Alert.alert('Permiso denegado', 'Necesitamos permisos para acceder a tus fotos.');
             return;
         }
 
+        // Exactamente igual a como lo tenían tus compañeros
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
+            mediaTypes: ['images'], 
             allowsEditing: true,
             aspect: [1, 1],
-            quality: 0.2, // Muy comprimida para que quepa como texto en la base de datos
+            quality: 0.2, 
             base64: true,
         });
 
@@ -67,8 +76,6 @@ export default function Profile() {
         try {
             const imageBase64 = `data:image/jpeg;base64,${asset.base64}`;
 
-            // Hack genial: guardamos la imagen reducida y empaquetada como texto
-            // directamente en el usuario. Así no necesitas pagar suscripción web.
             const docRef = doc(db, 'users', user.uid);
             await updateDoc(docRef, {
                 photoURL: imageBase64
@@ -76,7 +83,6 @@ export default function Profile() {
 
             const downloadURL = imageBase64;
 
-            // Actualizar estado local
             setUserData(prev => ({ ...prev, photoURL: downloadURL }));
             Alert.alert('Éxito', 'Foto de perfil actualizada correctamente.');
         } catch (error) {
@@ -84,6 +90,30 @@ export default function Profile() {
             Alert.alert('Error', 'No se pudo subir la imagen. Verifica las reglas de Storage.');
         } finally {
             setUploading(false);
+        }
+    };
+
+    // --- FUNCIÓN NUEVA PARA GUARDAR EL NOMBRE ---
+    const handleSaveName = async () => {
+        const user = auth.currentUser;
+        if (!user || !name.trim()) {
+            Alert.alert('Aviso', 'El nombre no puede estar vacío.');
+            return;
+        }
+
+        setSavingName(true);
+        try {
+            const docRef = doc(db, 'users', user.uid);
+            await updateDoc(docRef, {
+                name: name.trim()
+            });
+            Alert.alert('Éxito', 'Nombre actualizado correctamente.');
+            setUserData(prev => ({ ...prev, name: name.trim() }));
+        } catch (error) {
+            console.error("Error al guardar nombre:", error);
+            Alert.alert('Error', 'No se pudo actualizar el nombre.');
+        } finally {
+            setSavingName(false);
         }
     };
 
@@ -123,6 +153,30 @@ export default function Profile() {
             </View>
 
             <View style={styles.card}>
+                {/* --- NUEVO BLOQUE: Input para el nombre --- */}
+                <Text style={styles.label}>Nombre o Apodo:</Text>
+                <View style={styles.nameRow}>
+                    <TextInput
+                        style={styles.input}
+                        value={name}
+                        onChangeText={setName}
+                        placeholder="Ej: Juan Pérez"
+                        editable={!savingName}
+                    />
+                    <TouchableOpacity 
+                        style={[styles.saveBtn, savingName && { backgroundColor: '#80BFFF' }]} 
+                        onPress={handleSaveName} 
+                        disabled={savingName}
+                    >
+                        {savingName ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                            <Text style={styles.saveBtnText}>Guardar</Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
+
+                {/* Lo que ya estaba */}
                 <Text style={styles.label}>Email:</Text>
                 <Text style={styles.value}>{userData?.email || auth.currentUser?.email}</Text>
 
@@ -191,4 +245,34 @@ const styles = StyleSheet.create({
     card: { backgroundColor: 'white', padding: 20, borderRadius: 15, marginBottom: 20, elevation: 3 },
     label: { fontSize: 14, color: '#666', marginBottom: 5 },
     value: { fontSize: 18, fontWeight: '500', marginBottom: 15 },
+    
+    // --- ESTILOS NUEVOS (Al final del todo para no molestar) ---
+    nameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 15,
+    },
+    input: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        padding: 10,
+        borderRadius: 8,
+        fontSize: 16,
+        backgroundColor: '#fafafa',
+        marginRight: 10,
+    },
+    saveBtn: {
+        backgroundColor: '#007AFF',
+        paddingVertical: 12,
+        paddingHorizontal: 15,
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    saveBtnText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 14,
+    },
 });
