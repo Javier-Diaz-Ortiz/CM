@@ -3,6 +3,7 @@ import { useState } from 'react';
 import * as Location from 'expo-location';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Alert, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../services/firebase';
 import { createSession } from '../services/sessions';
 
@@ -119,7 +120,15 @@ export default function CreateSession() {
     return (
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
             <View style={styles.container}>
-                <Text style={styles.title}>Nueva Sesión</Text>
+                <View style={styles.topHeader}>
+                    <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/home')} style={styles.iconButton}>
+                        <Ionicons name="arrow-back" size={24} color="#0F172A" />
+                    </TouchableOpacity>
+                    <Text style={styles.titleLine}>Nueva Sesión</Text>
+                    <TouchableOpacity onPress={() => router.push('/profile')} style={styles.iconButton}>
+                        <Ionicons name="person-circle" size={32} color="#6366F1" />
+                    </TouchableOpacity>
+                </View>
 
                 <View style={styles.inputGroup}>
                     <Text style={styles.label}>Título</Text>
@@ -242,12 +251,29 @@ const styles = StyleSheet.create({
         paddingTop: 60,
         paddingBottom: 40,
     },
-    title: {
-        fontSize: 32,
-        fontWeight: '900',
+    topHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         marginBottom: 32,
+    },
+    titleLine: {
+        fontSize: 24,
+        fontWeight: '900',
         color: '#0F172A',
-        textAlign: 'center',
+    },
+    iconButton: {
+        width: 44,
+        height: 44,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 1
     },
     inputGroup: {
         marginBottom: 24,

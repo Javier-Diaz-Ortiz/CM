@@ -114,6 +114,14 @@ export default function SessionDetail() {
 
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : null} style={styles.container} keyboardVerticalOffset={80}>
+            <View style={styles.topHeader}>
+                <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/home')} style={styles.iconButton}>
+                    <Ionicons name="arrow-back" size={24} color="#0F172A" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/profile')} style={styles.iconButton}>
+                    <Ionicons name="person-circle" size={32} color="#6366F1" />
+                </TouchableOpacity>
+            </View>
             <FlatList
                 ListHeaderComponent={
                     <View style={styles.headerCard}>
@@ -121,8 +129,15 @@ export default function SessionDetail() {
                         <Text style={styles.subject}>{session.subject}</Text>
                         <Text style={styles.desc}>{session.description}</Text>
                         <View style={styles.infoRow}>
-                            <Text style={styles.time}>🕒 {new Date(session.startTime).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}</Text>
-                            <Text style={styles.time}> a {new Date(session.endTime).toLocaleString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                            <Text style={styles.time}>
+                                🕒 {(() => {
+                                    if (!session.startTime || !session.endTime) return 'Fecha por determinar';
+                                    const sDate = new Date(session.startTime);
+                                    const eDate = new Date(session.endTime);
+                                    const m = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+                                    return `${sDate.getDate()} de ${m[sDate.getMonth()]} de ${('0'+sDate.getHours()).slice(-2)}:${('0'+sDate.getMinutes()).slice(-2)} a ${('0'+eDate.getHours()).slice(-2)}:${('0'+eDate.getMinutes()).slice(-2)}`;
+                                })()}
+                            </Text>
                         </View>
 
                         <Text style={styles.partTitle}>Asistentes ({session.participants?.length || 0}/{session.maxParticipants || 10})</Text>
@@ -170,21 +185,36 @@ export default function SessionDetail() {
                         </View>
                     </View>
                 }
-                data={messages}
+                data={isJoined ? messages : []}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => {
-                    const isMe = item.senderId === user.uid;
+                    const isMe = item.senderId === user?.uid;
+                    const senderInfo = participantsInfo.find(p => p.id === item.senderId);
+                    const photoURL = senderInfo?.photoURL;
                     return (
-                        <View style={[styles.msgWrapper, isMe ? styles.msgRight : styles.msgLeft]}>
-                            {!isMe && <Text style={styles.msgName}>{item.senderName}</Text>}
-                            <View style={[styles.msgBubble, isMe ? styles.bubbleRight : styles.bubbleLeft]}>
-                                <Text style={isMe ? styles.msgTextRight : styles.msgTextLeft}>{item.text}</Text>
+                        <View style={[styles.msgContainer, isMe ? styles.msgRightContainer : styles.msgLeftContainer]}>
+                            {!isMe && (
+                                photoURL ? (
+                                    <Image source={{ uri: photoURL }} style={styles.msgAvatar} />
+                                ) : (
+                                    <View style={styles.msgAvatarPlaceholder}>
+                                        <Ionicons name="person" size={14} color="#999" />
+                                    </View>
+                                )
+                            )}
+                            <View style={[styles.msgWrapper, isMe ? styles.msgRight : styles.msgLeft]}>
+                                {!isMe && <Text style={styles.msgName}>{item.senderName}</Text>}
+                                <View style={[styles.msgBubble, isMe ? styles.bubbleRight : styles.bubbleLeft]}>
+                                    <Text style={isMe ? styles.msgTextRight : styles.msgTextLeft}>{item.text}</Text>
+                                </View>
                             </View>
                         </View>
                     );
                 }}
                 ListEmptyComponent={
-                    <Text style={styles.emptyChat}>No hay mensajes en el chat aún.</Text>
+                    <Text style={styles.emptyChat}>
+                        {isJoined ? 'No hay mensajes en el chat aún.' : '🔒 El chat es privado. Únete a la quedada para poder ver los mensajes de los demás.'}
+                    </Text>
                 }
                 contentContainerStyle={{ padding: 15 }}
             />
@@ -212,6 +242,8 @@ export default function SessionDetail() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F8FAFC' },
+    topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 60, paddingBottom: 10, backgroundColor: '#F8FAFC' },
+    iconButton: { width: 44, height: 44, backgroundColor: '#FFFFFF', borderRadius: 22, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     headerCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 24, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2, borderWidth: 1, borderColor: '#F1F5F9' },
     title: { fontSize: 28, fontWeight: '900', color: '#0F172A', marginBottom: 6 },
@@ -233,10 +265,15 @@ const styles = StyleSheet.create({
     btnDelete: { backgroundColor: '#EF4444', padding: 16, borderRadius: 16, alignItems: 'center', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
     btnDisabled: { backgroundColor: '#CBD5E1', shadowOpacity: 0, elevation: 0 },
     btnText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 },
-    msgWrapper: { marginBottom: 16, maxWidth: '85%', minWidth: 60, flexShrink: 1 },
+    msgContainer: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 16 },
+    msgLeftContainer: { alignSelf: 'flex-start', maxWidth: '85%' },
+    msgRightContainer: { alignSelf: 'flex-end', maxWidth: '85%' },
+    msgAvatar: { width: 28, height: 28, borderRadius: 14, marginRight: 8, marginBottom: 2 },
+    msgAvatarPlaceholder: { width: 28, height: 28, borderRadius: 14, marginRight: 8, marginBottom: 2, backgroundColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center' },
+    msgWrapper: { minWidth: 60, flexShrink: 1 },
     msgLeft: { alignSelf: 'flex-start' },
     msgRight: { alignSelf: 'flex-end' },
-    msgName: { fontSize: 12, color: '#64748B', fontWeight: 'bold', marginBottom: 4, marginLeft: 8 },
+    msgName: { fontSize: 12, color: '#64748B', fontWeight: 'bold', marginBottom: 4, marginLeft: 4 },
     msgBubble: { padding: 14, borderRadius: 20 },
     bubbleLeft: { backgroundColor: '#F1F5F9', borderBottomLeftRadius: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1, borderWidth: 1, borderColor: '#E2E8F0' },
     bubbleRight: { backgroundColor: '#6366F1', borderBottomRightRadius: 4, shadowColor: '#6366F1', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 1 },

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Button, FlatList, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
 import * as Location from 'expo-location';
 import MapView, { Marker, Callout } from 'react-native-maps';
+import { Ionicons } from '@expo/vector-icons';
 import { auth, db } from "../services/firebase";
 import { subscribeToActiveSessions } from "../services/sessions";
 export default function Home() {
@@ -104,16 +105,19 @@ export default function Home() {
         return (
             <View style={styles.unauthContainer}>
                 <View style={styles.heroSection}>
-                    <Text style={styles.heroEmoji}>📚</Text>
+                    <View style={styles.iconWrapper}>
+                        <Ionicons name="book" size={56} color="#4F46E5" />
+                    </View>
                     <Text style={styles.heroTitle}>StudyMeet</Text>
-                    <Text style={styles.heroSubtitle}>Conecta con compañeros locales, organiza sesiones de estudio grupal y aprueba con nota.</Text>
+                    <Text style={styles.heroSubtitle}>Conecta con tu campus, organiza sesiones de estudio grupal y no vuelvas a estudiar en soledad.</Text>
                 </View>
                 <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.primaryButton} onPress={() => router.push("/login")}>
-                        <Text style={styles.primaryButtonText}>Iniciar Sesión</Text>
+                    <TouchableOpacity style={styles.primaryButton} onPress={() => router.push("/register")}>
+                        <Text style={styles.primaryButtonText}>Empezar ahora</Text>
+                        <Ionicons name="arrow-forward" size={20} color="#FFFFFF" style={{ marginLeft: 8 }} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.secondaryButton} onPress={() => router.push("/register")}>
-                        <Text style={styles.secondaryButtonText}>Crear Nueva Cuenta</Text>
+                    <TouchableOpacity style={styles.ghostButton} onPress={() => router.push("/login")}>
+                        <Text style={styles.ghostButtonText}>Ya tengo cuenta</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -128,7 +132,7 @@ export default function Home() {
                         <View style={styles.header}>
                             <Text style={styles.welcome}>Hola, {user.email.split('@')[0]} 👋</Text>
                             <TouchableOpacity onPress={() => router.push("/profile")}>
-                                <Text style={styles.profileLink}>Mi Perfil</Text>
+                                <Ionicons name="person-circle" size={44} color="#6366F1" />
                             </TouchableOpacity>
                         </View>
 
@@ -145,7 +149,7 @@ export default function Home() {
                                     <Marker
                                         key={session.id}
                                         coordinate={{ latitude: session.location.latitude, longitude: session.location.longitude }}
-                                        pinColor={isJoined ? "green" : "red"}
+                                        pinColor={isJoined ? "red" : "green"}
                                         onCalloutPress={() => router.push('/session/' + session.id)}
                                     >
                                         <Callout tooltip={false}>
@@ -227,15 +231,15 @@ export default function Home() {
 
 const styles = StyleSheet.create({
     unauthContainer: { flex: 1, backgroundColor: '#F8FAFC', padding: 24, justifyContent: 'center' },
-    heroSection: { alignItems: 'center', marginBottom: 48 },
-    heroEmoji: { fontSize: 72, marginBottom: 24 },
-    heroTitle: { fontSize: 40, fontWeight: '900', color: '#0F172A', marginBottom: 16 },
-    heroSubtitle: { fontSize: 16, color: '#64748B', textAlign: 'center', lineHeight: 24 },
+    heroSection: { alignItems: 'center', marginBottom: 64 },
+    iconWrapper: { backgroundColor: '#EEF2FF', padding: 24, borderRadius: 32, marginBottom: 32, shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 24, elevation: 5 },
+    heroTitle: { fontSize: 48, fontWeight: '900', color: '#0F172A', marginBottom: 16, letterSpacing: -1.5 },
+    heroSubtitle: { fontSize: 18, color: '#64748B', textAlign: 'center', lineHeight: 28, paddingHorizontal: 20 },
     buttonContainer: { width: '100%', maxWidth: 400, alignSelf: 'center', gap: 16 },
-    primaryButton: { backgroundColor: '#6366F1', padding: 16, borderRadius: 16, alignItems: 'center', shadowColor: '#6366F1', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
-    primaryButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
-    secondaryButton: { backgroundColor: '#10B981', padding: 16, borderRadius: 16, alignItems: 'center', shadowColor: '#10B981', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
-    secondaryButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
+    primaryButton: { flexDirection: 'row', backgroundColor: '#4F46E5', padding: 20, borderRadius: 20, alignItems: 'center', justifyContent: 'center', shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 6 },
+    primaryButtonText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
+    ghostButton: { padding: 20, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', borderWidth: 2, borderColor: '#E2E8F0' },
+    ghostButtonText: { color: '#475569', fontSize: 18, fontWeight: '700' },
 
     container: { flex: 1, paddingHorizontal: 24, paddingTop: 60, backgroundColor: '#F8FAFC' },
     center: { flex: 1, justifyContent: "center", alignItems: "center" },
