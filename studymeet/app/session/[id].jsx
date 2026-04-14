@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
 import { deleteSession, joinSession, leaveSession, sendMessage, subscribeToMessages } from '../../services/sessions';
@@ -27,13 +28,18 @@ export default function SessionDetail() {
                     for (const uid of data.participants) {
                         try {
                             const uSnap = await getDoc(doc(db, 'users', uid));
-                            if (uSnap.exists() && uSnap.data().email) {
-                                pInfo.push(uSnap.data().email.split('@')[0]);
+                            if (uSnap.exists()) {
+                                const uData = uSnap.data();
+                                pInfo.push({
+                                    id: uid,
+                                    name: uData.name || (uData.email ? uData.email.split('@')[0] : "Alumno"),
+                                    photoURL: uData.photoURL || null
+                                });
                             } else {
-                                pInfo.push("Alumno");
+                                pInfo.push({ id: uid, name: "Alumno", photoURL: null });
                             }
                         } catch (e) {
-                            pInfo.push("Desconocido");
+                            pInfo.push({ id: uid, name: "Desconocido", photoURL: null });
                         }
                     }
                     setParticipantsInfo(pInfo);
@@ -88,7 +94,7 @@ export default function SessionDetail() {
             {
                 text: "Sí, borrar", style: 'destructive', onPress: async () => {
                     await deleteSession(id);
-                    router.back();
+                    router.canGoBack() ? router.back() : router.replace('/home');
                 }
             }
         ]);
@@ -121,7 +127,24 @@ export default function SessionDetail() {
 
                         <Text style={styles.partTitle}>Asistentes ({session.participants?.length || 0}/{session.maxParticipants || 10})</Text>
                         <View style={styles.usersBox}>
-                            <Text style={styles.partList}>{participantsInfo.join(', ') || 'Nadie aún...'}</Text>
+                            {participantsInfo.length > 0 ? (
+                                <View style={styles.participantsContainer}>
+                                    {participantsInfo.map((p, index) => (
+                                        <View key={p.id || index} style={styles.participantChip}>
+                                            {p.photoURL ? (
+                                                <Image source={{ uri: p.photoURL }} style={styles.participantAvatar} />
+                                            ) : (
+                                                <View style={styles.participantPlaceholder}>
+                                                    <Ionicons name="person" size={14} color="#999" />
+                                                </View>
+                                            )}
+                                            <Text style={styles.participantName}>{p.name}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            ) : (
+                                <Text style={styles.partList}>Nadie aún...</Text>
+                            )}
                         </View>
 
                         <View style={styles.actions}>
@@ -188,36 +211,41 @@ export default function SessionDetail() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F0F2F5' },
+    container: { flex: 1, backgroundColor: '#F8FAFC' },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    headerCard: { backgroundColor: '#fff', borderRadius: 15, padding: 20, marginBottom: 20, elevation: 2, shadowOpacity: 0.1, shadowRadius: 3 },
-    title: { fontSize: 26, fontWeight: 'bold', color: '#1C1E21', marginBottom: 5 },
-    subject: { fontSize: 16, color: '#007AFF', fontWeight: 'bold', marginBottom: 15 },
-    desc: { fontSize: 16, color: '#333', marginBottom: 15, lineHeight: 22 },
-    infoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-    time: { fontSize: 15, color: '#555', fontWeight: '500' },
-    partTitle: { fontSize: 16, fontWeight: 'bold', marginTop: 5, marginBottom: 10 },
-    usersBox: { backgroundColor: '#F8F9FA', padding: 10, borderRadius: 8, marginBottom: 15 },
-    partList: { fontSize: 14, color: '#444', fontStyle: 'italic' },
-    actions: { flexDirection: 'column', gap: 10, marginTop: 10 },
-    btnJoin: { backgroundColor: '#34C759', padding: 14, borderRadius: 10, alignItems: 'center' },
-    btnLeave: { backgroundColor: '#FF9500', padding: 14, borderRadius: 10, alignItems: 'center' },
-    btnDelete: { backgroundColor: '#FF3B30', padding: 14, borderRadius: 10, alignItems: 'center' },
-    btnDisabled: { backgroundColor: '#ccc' },
-    btnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-    msgWrapper: { marginBottom: 12, maxWidth: '85%' },
+    headerCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 24, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2, borderWidth: 1, borderColor: '#F1F5F9' },
+    title: { fontSize: 28, fontWeight: '900', color: '#0F172A', marginBottom: 6 },
+    subject: { fontSize: 16, color: '#6366F1', fontWeight: '800', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 0.5 },
+    desc: { fontSize: 16, color: '#475569', marginBottom: 20, lineHeight: 24 },
+    infoRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+    time: { fontSize: 15, color: '#64748B', fontWeight: '600' },
+    partTitle: { fontSize: 14, fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 },
+    usersBox: { backgroundColor: '#F8FAFC', padding: 16, borderRadius: 16, marginBottom: 20, borderWidth: 1, borderColor: '#E2E8F0' },
+    partList: { fontSize: 14, color: '#64748B', fontStyle: 'italic' },
+    participantsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    participantChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 6, paddingRight: 12, borderRadius: 24, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, borderWidth: 1, borderColor: '#E2E8F0' },
+    participantAvatar: { width: 28, height: 28, borderRadius: 14, marginRight: 8 },
+    participantPlaceholder: { width: 28, height: 28, borderRadius: 14, marginRight: 8, backgroundColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center' },
+    participantName: { fontSize: 13, color: '#0F172A', fontWeight: 'bold' },
+    actions: { flexDirection: 'column', gap: 12, marginTop: 10 },
+    btnJoin: { backgroundColor: '#10B981', padding: 16, borderRadius: 16, alignItems: 'center', shadowColor: '#10B981', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
+    btnLeave: { backgroundColor: '#F59E0B', padding: 16, borderRadius: 16, alignItems: 'center', shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
+    btnDelete: { backgroundColor: '#EF4444', padding: 16, borderRadius: 16, alignItems: 'center', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
+    btnDisabled: { backgroundColor: '#CBD5E1', shadowOpacity: 0, elevation: 0 },
+    btnText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 },
+    msgWrapper: { marginBottom: 16, maxWidth: '85%', minWidth: 60, flexShrink: 1 },
     msgLeft: { alignSelf: 'flex-start' },
     msgRight: { alignSelf: 'flex-end' },
-    msgName: { fontSize: 12, color: '#888', marginBottom: 4, marginLeft: 5 },
-    msgBubble: { padding: 12, borderRadius: 18 },
-    bubbleLeft: { backgroundColor: '#fff', borderBottomLeftRadius: 4, elevation: 1 },
-    bubbleRight: { backgroundColor: '#007AFF', borderBottomRightRadius: 4, elevation: 1 },
-    msgTextLeft: { color: '#333', fontSize: 15 },
-    msgTextRight: { color: '#fff', fontSize: 15 },
-    emptyChat: { textAlign: 'center', color: '#999', marginTop: 40, fontStyle: 'italic' },
-    chatInputRow: { flexDirection: 'row', padding: 12, backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#eee', paddingBottom: Platform.OS === 'ios' ? 25 : 12 },
-    input: { flex: 1, backgroundColor: '#F0F2F5', borderRadius: 20, paddingHorizontal: 15, paddingVertical: 10, marginRight: 10, fontSize: 15 },
-    sendBtn: { justifyContent: 'center', backgroundColor: '#007AFF', paddingHorizontal: 18, borderRadius: 20 },
-    sendText: { color: '#fff', fontWeight: 'bold' },
-    chatBlocked: { padding: 20, backgroundColor: '#E9E9EB', alignItems: 'center', paddingBottom: Platform.OS === 'ios' ? 30 : 20 }
+    msgName: { fontSize: 12, color: '#64748B', fontWeight: 'bold', marginBottom: 4, marginLeft: 8 },
+    msgBubble: { padding: 14, borderRadius: 20 },
+    bubbleLeft: { backgroundColor: '#F1F5F9', borderBottomLeftRadius: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1, borderWidth: 1, borderColor: '#E2E8F0' },
+    bubbleRight: { backgroundColor: '#6366F1', borderBottomRightRadius: 4, shadowColor: '#6366F1', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 1 },
+    msgTextLeft: { color: '#0F172A', fontSize: 15, lineHeight: 22 },
+    msgTextRight: { color: '#FFFFFF', fontSize: 15, lineHeight: 22 },
+    emptyChat: { textAlign: 'center', color: '#94A3B8', marginTop: 40, fontStyle: 'italic', fontSize: 15 },
+    chatInputRow: { flexDirection: 'row', padding: 16, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderColor: '#F1F5F9', paddingBottom: Platform.OS === 'ios' ? 25 : 16 },
+    input: { flex: 1, backgroundColor: '#F8FAFC', borderRadius: 24, paddingHorizontal: 20, paddingVertical: 12, marginRight: 12, fontSize: 15, borderWidth: 1, borderColor: '#E2E8F0', color: '#0F172A' },
+    sendBtn: { justifyContent: 'center', backgroundColor: '#6366F1', paddingHorizontal: 20, borderRadius: 24, shadowColor: '#6366F1', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2 },
+    sendText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 15 },
+    chatBlocked: { padding: 20, backgroundColor: '#F8FAFC', alignItems: 'center', borderTopWidth: 1, borderColor: '#E2E8F0', paddingBottom: Platform.OS === 'ios' ? 30 : 20 }
 });

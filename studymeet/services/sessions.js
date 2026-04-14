@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, updateDoc, deleteDoc, getDocs, orderBy, query, onSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { addDoc, collection, doc, updateDoc, deleteDoc, getDocs, getDoc, orderBy, query, onSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from './firebase';
 
 /**
@@ -154,6 +154,17 @@ export const deleteSession = async (sessionId) => {
 };
 
 export const sendMessage = async (sessionId, userId, userName, text) => {
+    const sessionRef = doc(db, 'sessions', sessionId);
+    const sessionSnap = await getDoc(sessionRef);
+    if (!sessionSnap.exists()) {
+        throw new Error("La sesión no existe.");
+    }
+
+    const sessionData = sessionSnap.data();
+    if (!sessionData.participants || !sessionData.participants.includes(userId)) {
+        throw new Error("No puedes enviar mensajes a una sesión en la que no participas.");
+    }
+
     await addDoc(collection(db, 'sessions', sessionId, 'messages'), {
         text,
         senderId: userId,
@@ -168,5 +179,7 @@ export const subscribeToMessages = (sessionId, callback) => {
         const msgs = [];
         snapshot.forEach(d => msgs.push({ id: d.id, ...d.data() }));
         callback(msgs);
+    }, (error) => {
+        console.error("Error al escuchar mensajes:", error);
     });
 };

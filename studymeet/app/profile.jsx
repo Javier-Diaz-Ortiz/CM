@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 // Sin Firebase Storage: Guardaremos la foto comprimida directamente en Firestore
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Button, StyleSheet, Text, View, Image, TouchableOpacity, Alert, TextInput } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View, Image, TouchableOpacity, Alert, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { auth, db } from '../services/firebase';
 import { Ionicons } from '@expo/vector-icons';
@@ -126,8 +126,14 @@ export default function Profile() {
     }
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Mi Perfil</Text>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.replace('/home')} style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={24} color="#0F172A" />
+                </TouchableOpacity>
+                <Text style={styles.title}>Mi Perfil</Text>
+                <View style={{width: 40}} />
+            </View>
 
             <View style={styles.profileHeader}>
                 <TouchableOpacity onPress={pickImage} disabled={uploading}>
@@ -136,7 +142,7 @@ export default function Profile() {
                             <Image source={{ uri: userData.photoURL }} style={styles.profileImage} />
                         ) : (
                             <View style={styles.placeholderImage}>
-                                <Ionicons name="person" size={50} color="#999" />
+                                <Ionicons name="person" size={50} color="#94A3B8" />
                             </View>
                         )}
                         {uploading && (
@@ -153,8 +159,7 @@ export default function Profile() {
             </View>
 
             <View style={styles.card}>
-                {/* --- NUEVO BLOQUE: Input para el nombre --- */}
-                <Text style={styles.label}>Nombre o Apodo:</Text>
+                <Text style={styles.label}>Nombre o Apodo</Text>
                 <View style={styles.nameRow}>
                     <TextInput
                         style={styles.input}
@@ -162,9 +167,10 @@ export default function Profile() {
                         onChangeText={setName}
                         placeholder="Ej: Juan Pérez"
                         editable={!savingName}
+                        placeholderTextColor="#94A3B8"
                     />
                     <TouchableOpacity 
-                        style={[styles.saveBtn, savingName && { backgroundColor: '#80BFFF' }]} 
+                        style={[styles.saveBtn, savingName && { backgroundColor: '#A5B4FC' }]} 
                         onPress={handleSaveName} 
                         disabled={savingName}
                     >
@@ -176,103 +182,36 @@ export default function Profile() {
                     </TouchableOpacity>
                 </View>
 
-                {/* Lo que ya estaba */}
-                <Text style={styles.label}>Email:</Text>
+                <Text style={styles.label}>Correo electrónico</Text>
                 <Text style={styles.value}>{userData?.email || auth.currentUser?.email}</Text>
 
-                <Text style={styles.label}>Miembro desde:</Text>
+                <Text style={styles.label}>Miembro desde</Text>
                 <Text style={styles.value}>
                     {userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'N/A'}
                 </Text>
             </View>
-
-            <Button title="Volver al Inicio" onPress={() => router.replace('/home')} />
-        </View>
+        </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5', justifyContent: 'center' },
-    title: { fontSize: 28, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-    profileHeader: { alignItems: 'center', marginBottom: 20 },
-    imageContainer: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        marginBottom: 10,
-        position: 'relative',
-        backgroundColor: '#e1e1e1',
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-    },
-    profileImage: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-    },
-    placeholderImage: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#e1e1e1',
-    },
-    uploadingOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        borderRadius: 60,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    editBadge: {
-        position: 'absolute',
-        right: 0,
-        bottom: 0,
-        backgroundColor: '#007AFF',
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 3,
-        borderColor: '#f5f5f5',
-    },
-    changePhotoText: { color: '#007AFF', fontSize: 14, fontWeight: '500' },
-    card: { backgroundColor: 'white', padding: 20, borderRadius: 15, marginBottom: 20, elevation: 3 },
-    label: { fontSize: 14, color: '#666', marginBottom: 5 },
-    value: { fontSize: 18, fontWeight: '500', marginBottom: 15 },
+    container: { flex: 1, paddingHorizontal: 24, paddingTop: 60, backgroundColor: '#F8FAFC' },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 },
+    backButton: { padding: 8, backgroundColor: '#FFFFFF', borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
+    title: { fontSize: 24, fontWeight: '800', color: '#0F172A' },
+    profileHeader: { alignItems: 'center', marginBottom: 32 },
+    imageContainer: { width: 128, height: 128, borderRadius: 64, marginBottom: 12, position: 'relative', backgroundColor: '#F1F5F9', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 },
+    profileImage: { width: 128, height: 128, borderRadius: 64 },
+    placeholderImage: { width: 128, height: 128, borderRadius: 64, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1F5F9' },
+    uploadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 64, justifyContent: 'center', alignItems: 'center' },
+    editBadge: { position: 'absolute', right: 0, bottom: 4, backgroundColor: '#6366F1', width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', borderWidth: 4, borderColor: '#F8FAFC', shadowColor: '#6366F1', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 3 },
+    changePhotoText: { color: '#6366F1', fontSize: 15, fontWeight: '700' },
+    card: { backgroundColor: '#FFFFFF', padding: 24, borderRadius: 24, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2, borderWidth: 1, borderColor: '#F1F5F9' },
+    label: { fontSize: 13, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
+    value: { fontSize: 16, fontWeight: '600', color: '#0F172A', marginBottom: 24 },
     
-    // --- ESTILOS NUEVOS (Al final del todo para no molestar) ---
-    nameRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 15,
-    },
-    input: {
-        flex: 1,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        padding: 10,
-        borderRadius: 8,
-        fontSize: 16,
-        backgroundColor: '#fafafa',
-        marginRight: 10,
-    },
-    saveBtn: {
-        backgroundColor: '#007AFF',
-        paddingVertical: 12,
-        paddingHorizontal: 15,
-        borderRadius: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    saveBtnText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 14,
-    },
+    nameRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
+    input: { flex: 1, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', padding: 16, borderRadius: 16, fontSize: 16, color: '#0F172A', marginRight: 12 },
+    saveBtn: { backgroundColor: '#6366F1', paddingVertical: 16, paddingHorizontal: 20, borderRadius: 16, justifyContent: 'center', alignItems: 'center', shadowColor: '#6366F1', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },
+    saveBtnText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 15 }
 });

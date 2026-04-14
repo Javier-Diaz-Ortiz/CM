@@ -119,7 +119,7 @@ export default function CreateSession() {
     return (
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
             <View style={styles.container}>
-                <Text style={styles.title}>Nueva Sesión de Estudio</Text>
+                <Text style={styles.title}>Nueva Sesión</Text>
 
                 <View style={styles.inputGroup}>
                     <Text style={styles.label}>Título</Text>
@@ -129,6 +129,7 @@ export default function CreateSession() {
                         onChangeText={setTitle}
                         placeholder="Ej: Cálculo II - Primer Parcial"
                         editable={!isLoading}
+                        placeholderTextColor="#94A3B8"
                     />
                 </View>
 
@@ -140,6 +141,7 @@ export default function CreateSession() {
                         onChangeText={setSubject}
                         placeholder="Ej: Análisis Matemático"
                         editable={!isLoading}
+                        placeholderTextColor="#94A3B8"
                     />
                 </View>
 
@@ -149,15 +151,16 @@ export default function CreateSession() {
                         style={[styles.input, styles.textArea]}
                         value={description}
                         onChangeText={setDescription}
-                        placeholder="Ej: Repaso de integrales dobles y triples. Traed los apuntes."
+                        placeholder="Ej: Repaso de integrales dobles y triples."
                         multiline
                         numberOfLines={4}
                         editable={!isLoading}
+                        placeholderTextColor="#94A3B8"
                     />
                 </View>
 
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Capacidad Máxima (Aforo)</Text>
+                    <Text style={styles.label}>Capacidad Máxima</Text>
                     <TextInput
                         style={styles.input}
                         value={maxParticipants}
@@ -165,6 +168,7 @@ export default function CreateSession() {
                         keyboardType="numeric"
                         editable={!isLoading}
                         placeholder="Ej: 10"
+                        placeholderTextColor="#94A3B8"
                     />
                 </View>
 
@@ -211,13 +215,13 @@ export default function CreateSession() {
                         {isLoading ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
-                            <Text style={styles.buttonText}>Crear Sesión</Text>
+                            <Text style={styles.buttonText}>Publicar Sesión</Text>
                         )}
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={styles.cancelButton}
-                        onPress={() => router.back()}
+                        onPress={() => router.canGoBack() ? router.back() : router.replace('/home')}
                         disabled={isLoading}
                     >
                         <Text style={styles.cancelText}>Cancelar</Text>
@@ -231,83 +235,106 @@ export default function CreateSession() {
 const styles = StyleSheet.create({
     scrollContainer: {
         flexGrow: 1,
-        backgroundColor: '#F0F2F5',
+        backgroundColor: '#F8FAFC',
     },
     container: {
-        padding: 25,
+        paddingHorizontal: 24,
         paddingTop: 60,
+        paddingBottom: 40,
     },
     title: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        marginBottom: 30,
-        color: '#1C1E21',
+        fontSize: 32,
+        fontWeight: '900',
+        marginBottom: 32,
+        color: '#0F172A',
         textAlign: 'center',
     },
     inputGroup: {
-        marginBottom: 20,
+        marginBottom: 24,
     },
     label: {
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 14,
+        fontWeight: '700',
         marginBottom: 8,
-        color: '#4B4B4B',
+        color: '#475569',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     input: {
-        backgroundColor: '#fff',
+        backgroundColor: '#FFFFFF',
         borderWidth: 1,
-        borderColor: '#DDD',
-        padding: 12,
-        borderRadius: 10,
+        borderColor: '#E2E8F0',
+        padding: 16,
+        borderRadius: 16,
         fontSize: 16,
+        color: '#0F172A',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 1,
     },
     textArea: {
-        height: 100,
+        height: 120,
         textAlignVertical: 'top',
+        paddingTop: 16,
     },
     dateRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        gap: 10,
+        gap: 12,
     },
     datePickerBtn: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#FFFFFF',
         borderWidth: 1,
-        borderColor: '#DDD',
-        padding: 12,
-        borderRadius: 10,
+        borderColor: '#E2E8F0',
+        padding: 16,
+        borderRadius: 16,
         alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 1,
     },
     dateText: {
         fontSize: 16,
-        color: '#1C1E21',
+        color: '#0F172A',
+        fontWeight: '500',
     },
     actions: {
-        marginTop: 10,
+        marginTop: 24,
     },
     publishButton: {
-        backgroundColor: '#34C759',
+        backgroundColor: '#10B981',
         padding: 16,
-        borderRadius: 12,
+        borderRadius: 16,
         alignItems: 'center',
-        elevation: 2,
+        shadowColor: '#10B981',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 3,
     },
     buttonDisabled: {
-        backgroundColor: '#95DFa5',
+        backgroundColor: '#A7F3D0',
+        shadowOpacity: 0,
+        elevation: 0,
     },
     buttonText: {
-        color: '#fff',
-        fontSize: 18,
+        color: '#FFFFFF',
+        fontSize: 16,
         fontWeight: 'bold',
     },
     cancelButton: {
-        marginTop: 15,
-        padding: 12,
+        marginTop: 16,
+        padding: 16,
         alignItems: 'center',
     },
     cancelText: {
-        color: '#666',
+        color: '#64748B',
         fontSize: 16,
+        fontWeight: '600',
     },
 });
