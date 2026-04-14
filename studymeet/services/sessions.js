@@ -43,12 +43,29 @@ export const getActiveSessions = async () => {
         const querySnapshot = await getDocs(sessionsQuery);
 
         const sessions = [];
-        querySnapshot.forEach((doc) => {
+        const now = new Date();
+        const deletionPromises = [];
+
+        querySnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            if (data.endTime) {
+                const end = new Date(data.endTime);
+                // Si ha pasado más de 1 minuto (60000ms) desde la hora de fin
+                if (now.getTime() > end.getTime() + 60000) {
+                    // Borramos la sesión físicamente de Firebase
+                    deletionPromises.push(deleteDoc(doc(db, 'sessions', docSnap.id)).catch(e => console.error("Error borrando sesión caducada:", e)));
+                    return; // No la añadimos a las sesiones activas
+                }
+            }
+            
             sessions.push({
-                id: doc.id,
-                ...doc.data()
+                id: docSnap.id,
+                ...data
             });
         });
+
+        // Ejecutar los borrados en segundo plano sin frenar el return
+        Promise.all(deletionPromises).catch(() => {});
 
         return sessions;
     } catch (error) {
@@ -68,10 +85,23 @@ export const subscribeToActiveSessions = (callback) => {
 
         const unsubscribe = onSnapshot(sessionsQuery, (querySnapshot) => {
             const sessions = [];
-            querySnapshot.forEach((doc) => {
+            const now = new Date();
+            
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                if (data.endTime) {
+                    const end = new Date(data.endTime);
+                    // Si ha pasado más de 1 minuto (60000ms) desde la hora de fin
+                    if (now.getTime() > end.getTime() + 60000) {
+                        // Lo mandamos a borrar y no lo incluimos
+                        deleteDoc(doc(db, 'sessions', docSnap.id)).catch(e => console.error("Error borrando sesión caducada lazy:", e));
+                        return; 
+                    }
+                }
+                
                 sessions.push({
-                    id: doc.id,
-                    ...doc.data()
+                    id: docSnap.id,
+                    ...data
                 });
             });
             callback(sessions);

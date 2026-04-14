@@ -159,27 +159,27 @@ export default function Profile() {
             </View>
 
             <View style={styles.card}>
-                <Text style={styles.label}>Nombre o Apodo</Text>
+                <Text style={styles.label}>NOMBRE</Text>
                 <View style={styles.nameRow}>
                     <TextInput
                         style={styles.input}
                         value={name}
                         onChangeText={setName}
-                        placeholder="Ej: Juan Pérez"
                         editable={!savingName}
-                        placeholderTextColor="#94A3B8"
                     />
-                    <TouchableOpacity 
-                        style={[styles.saveBtn, savingName && { backgroundColor: '#A5B4FC' }]} 
-                        onPress={handleSaveName} 
-                        disabled={savingName}
-                    >
-                        {savingName ? (
-                            <ActivityIndicator size="small" color="#fff" />
-                        ) : (
-                            <Text style={styles.saveBtnText}>Guardar</Text>
-                        )}
-                    </TouchableOpacity>
+                    {name.trim() !== (userData?.name || '') && (
+                        <TouchableOpacity 
+                            style={[styles.saveBtn, savingName && { backgroundColor: '#A5B4FC' }]} 
+                            onPress={handleSaveName} 
+                            disabled={savingName}
+                        >
+                            {savingName ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                                <Text style={styles.saveBtnText}>Guardar</Text>
+                            )}
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 <Text style={styles.label}>Correo electrónico</Text>
